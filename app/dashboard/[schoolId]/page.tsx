@@ -189,7 +189,11 @@ export default function SchoolDetailPage() {
         <div>
           <Link href="/dashboard" className="text-gray-500 text-sm hover:text-gray-300">← Okullar</Link>
           <h1 className="text-2xl font-bold mt-1">{(school as Record<string, unknown>)?.name as string}</h1>
-          <p className="text-gray-500 text-sm">{(school as Record<string, unknown>)?.domain as string}</p>
+          <p className="text-gray-500 text-sm">{(school as Record<string, unknown>)?.domain as string}
+            <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${(school as Record<string, unknown>)?.provider === "google" ? "bg-blue-900/30 text-blue-400" : "bg-indigo-900/30 text-indigo-400"}`}>
+              {(school as Record<string, unknown>)?.provider === "google" ? "Google" : "Outlook"}
+            </span>
+          </p>
         </div>
         <div className={`px-3 py-1 rounded-full text-sm ${authOk ? "bg-green-900/50 text-green-400" : "bg-red-900/50 text-red-400"}`}>
           {authOk ? (school as Record<string, unknown>)?.authEmail as string : "Auth Gerekli"}
@@ -199,8 +203,12 @@ export default function SchoolDetailPage() {
       {/* Auth flow */}
       {!authOk && !userCode && (
         <div className="bg-gray-900 rounded-xl p-5 mb-6 border border-yellow-800 text-center">
-          <p className="text-yellow-400 mb-3">Microsoft hesabıyla oturum aç (1 kere yeter)</p>
-          <button onClick={startAuth} className="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium">Microsoft ile Oturum Aç</button>
+          <p className="text-yellow-400 mb-3">
+            {(school as Record<string, unknown>)?.provider === "google" ? "Google hesabıyla" : "Microsoft hesabıyla"} oturum aç (1 kere yeter)
+          </p>
+          <button onClick={startAuth} className="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium">
+            {(school as Record<string, unknown>)?.provider === "google" ? "Google ile Oturum Aç" : "Microsoft ile Oturum Aç"}
+          </button>
         </div>
       )}
       {userCode && (

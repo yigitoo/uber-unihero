@@ -220,7 +220,7 @@ export default function ScrapePage() {
         <div className="text-center text-gray-600 py-10 text-sm">
           Scrape başlatmak için yukarıdaki butona tıklayın.
           <br />
-          Microsoft People Directory API üzerinden öğrenci emailleri taranacaktır.
+          Üniversite directory&apos;si üzerinden öğrenci emailleri taranacaktır.
         </div>
       )}
     </div>

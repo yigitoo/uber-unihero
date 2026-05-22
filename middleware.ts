@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   // QStash auto-send endpoint — authenticated by QStash signatures, not cookies
-  if (request.nextUrl.pathname.includes("/auto-send")) {
+  if (request.nextUrl.pathname.includes("/auto-send") || request.nextUrl.pathname.includes("/auth/google/callback")) {
     return NextResponse.next();
   }
 

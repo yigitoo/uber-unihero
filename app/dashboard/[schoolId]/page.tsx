@@ -90,6 +90,10 @@ export default function SchoolDetailPage() {
     fetchAll();
     fetchSchedule();
     fetch("/api/templates").then(r => r.ok ? r.json() : []).then(setTemplates).catch(() => {});
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("google_auth") === "success") {
+      setMsg({ text: "Google oturum açıldı!", ok: true });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [fetchAll]);
 
@@ -132,6 +136,14 @@ export default function SchoolDetailPage() {
       body: JSON.stringify({ action: "start" }),
     });
     const data = await res.json();
+
+    if (data.redirect) {
+      window.open(data.authUrl, "_blank");
+      setMsg({ text: "Google oturum açma sayfası açıldı. Tamamlandığında bu sayfa yenilenecek.", ok: true });
+      pollRef.current = setInterval(() => { fetchAll(); }, 5000);
+      return;
+    }
+
     setUserCode(data.userCode);
     setVerificationUri(data.verificationUri);
     setAuthPolling(true);

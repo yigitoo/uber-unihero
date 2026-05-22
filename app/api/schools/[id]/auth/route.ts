@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { startDeviceCode, pollDeviceCode } from "@/lib/outlook";
-import { startGoogleDeviceCode, pollGoogleDeviceCode } from "@/lib/google";
+import { getGoogleAuthUrl } from "@/lib/google";
 import { getSchool } from "@/lib/redis";
 
 export async function POST(
@@ -14,9 +14,11 @@ export async function POST(
     const isGoogle = school?.provider === "google";
 
     if (action === "start") {
-      const result = isGoogle
-        ? await startGoogleDeviceCode(id)
-        : await startDeviceCode(id);
+      if (isGoogle) {
+        const authUrl = getGoogleAuthUrl(id);
+        return NextResponse.json({ redirect: true, authUrl });
+      }
+      const result = await startDeviceCode(id);
       return NextResponse.json({
         userCode: result.userCode,
         verificationUri: result.verificationUri,
@@ -24,9 +26,10 @@ export async function POST(
     }
 
     if (action === "poll") {
-      const result = isGoogle
-        ? await pollGoogleDeviceCode(id)
-        : await pollDeviceCode(id);
+      if (isGoogle) {
+        return NextResponse.json({ done: false, error: "Google uses redirect flow" });
+      }
+      const result = await pollDeviceCode(id);
       return NextResponse.json(result);
     }
 

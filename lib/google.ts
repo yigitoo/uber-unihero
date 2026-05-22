@@ -4,9 +4,8 @@ import {
   getRefreshToken,
   setRefreshToken,
   setAuthEmail,
-  setDeviceCode,
-  getDeviceCode,
   getSchool,
+  redis,
 } from "./redis";
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
@@ -17,61 +16,58 @@ const SCOPES = [
   "https://www.googleapis.com/auth/userinfo.email",
 ].join(" ");
 
-// ── Device Code Flow ──
-
-export async function startGoogleDeviceCode(schoolId: string) {
-  const res = await fetch("https://oauth2.googleapis.com/device/code", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-    }),
-  });
-  const data = await res.json();
-  await setDeviceCode(schoolId, data.device_code);
-
-  return {
-    userCode: data.user_code as string,
-    verificationUri: data.verification_url as string,
-  };
+function getRedirectUri() {
+  const base = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
+  return `${base}/api/auth/google/callback`;
 }
 
-export async function pollGoogleDeviceCode(schoolId: string) {
-  const deviceCode = await getDeviceCode(schoolId);
-  if (!deviceCode) return { done: false, error: "No device code" };
+// ── OAuth2 Web Flow ──
 
+export function getGoogleAuthUrl(schoolId: string): string {
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    redirect_uri: getRedirectUri(),
+    response_type: "code",
+    scope: SCOPES,
+    access_type: "offline",
+    prompt: "consent",
+    state: schoolId,
+  });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
+
+export async function exchangeGoogleCode(code: string, schoolId: string) {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
-      device_code: deviceCode,
-      grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+      code,
+      grant_type: "authorization_code",
+      redirect_uri: getRedirectUri(),
     }),
   });
+
   const data = await res.json();
+  if (!data.access_token) return { done: false, error: data.error_description || data.error };
 
-  if (data.error === "authorization_pending") return { done: false };
-  if (data.error === "slow_down") return { done: false };
-  if (data.error) return { done: false, error: data.error_description || data.error };
+  await setAccessToken(schoolId, data.access_token);
+  if (data.refresh_token) await setRefreshToken(schoolId, data.refresh_token);
 
-  if (data.access_token) {
-    await setAccessToken(schoolId, data.access_token);
-    if (data.refresh_token) await setRefreshToken(schoolId, data.refresh_token);
-
-    const me = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-      headers: { Authorization: `Bearer ${data.access_token}` },
-    });
-    if (me.ok) {
-      const meData = await me.json();
-      await setAuthEmail(schoolId, meData.email || "");
-    }
-    return { done: true };
+  const me = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+    headers: { Authorization: `Bearer ${data.access_token}` },
+  });
+  if (me.ok) {
+    const meData = await me.json();
+    await setAuthEmail(schoolId, meData.email || "");
   }
 
-  return { done: false, error: "Unexpected response" };
+  return { done: true };
 }
 
 // ── Token Management ──
@@ -158,7 +154,8 @@ export async function sendGmail(
   if (!token) return { success: false, error: "Token yok — authenticate ol" };
 
   const school = await getSchool(schoolId);
-  const from = school ? `noreply@${school.domain}` : "";
+  const authEmail = await redis.get<string>(`auth:${schoolId}:email`);
+  const from = authEmail || `noreply@${school?.domain || ""}`;
 
   const bccHeader = bccRecipients.map(e => `<${e}>`).join(", ");
   const boundary = `boundary_${Date.now()}`;

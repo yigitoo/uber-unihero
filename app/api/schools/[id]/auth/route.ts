@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { startDeviceCode, pollDeviceCode } from "@/lib/outlook";
-import { getGoogleAuthUrl } from "@/lib/google";
-import { getSchool } from "@/lib/redis";
+import { getSchool, redis, setAuthEmail } from "@/lib/redis";
 
 export async function POST(
   req: NextRequest,
@@ -9,14 +8,26 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action } = body;
     const school = await getSchool(id);
     const isGoogle = school?.provider === "google";
 
+    // Google: save cookies + SAPISIDHASH for PeopleStack API
+    if (action === "save-google-cookies") {
+      const { cookies, sapisidhash, email } = body;
+      if (!cookies || !sapisidhash) {
+        return NextResponse.json({ error: "cookies ve sapisidhash gerekli" }, { status: 400 });
+      }
+      await redis.set(`auth:${id}:google_cookies`, cookies);
+      await redis.set(`auth:${id}:google_sapisidhash`, sapisidhash);
+      if (email) await setAuthEmail(id, email);
+      return NextResponse.json({ done: true });
+    }
+
     if (action === "start") {
       if (isGoogle) {
-        const authUrl = getGoogleAuthUrl(id);
-        return NextResponse.json({ redirect: true, authUrl });
+        return NextResponse.json({ googleCookieAuth: true });
       }
       const result = await startDeviceCode(id);
       return NextResponse.json({
@@ -27,7 +38,8 @@ export async function POST(
 
     if (action === "poll") {
       if (isGoogle) {
-        return NextResponse.json({ done: false, error: "Google uses redirect flow" });
+        const hasCookies = await redis.get<string>(`auth:${id}:google_cookies`);
+        return NextResponse.json({ done: !!hasCookies });
       }
       const result = await pollDeviceCode(id);
       return NextResponse.json(result);

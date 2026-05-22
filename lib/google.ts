@@ -106,40 +106,67 @@ export async function getValidGoogleToken(schoolId: string): Promise<string | nu
   return null;
 }
 
-// ── Directory Search (People API) ──
+// ── Directory Search (PeopleStack Autocomplete — same approach as Outlook) ──
 
 export async function searchGoogleDirectory(
   schoolId: string,
   query: string,
-  pageSize = 100
 ): Promise<{ name: string; email: string; type: string }[]> {
-  const token = await getValidGoogleToken(schoolId);
-  if (!token) return [];
+  const cookies = await redis.get<string>(`auth:${schoolId}:google_cookies`);
+  const sapisidhash = await redis.get<string>(`auth:${schoolId}:google_sapisidhash`);
 
-  const params = new URLSearchParams({
-    query,
-    readMask: "names,emailAddresses",
-    sources: "DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE",
-    pageSize: String(pageSize),
-  });
+  if (!cookies || !sapisidhash) return [];
+
+  // Payload: [134, query, [1,2], 8]
+  const payload = JSON.stringify([134, query, [1, 2], 8]);
 
   const res = await fetch(
-    `https://people.googleapis.com/v1/people:searchDirectoryPeople?${params}`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    "https://peoplestack-pa.clients6.google.com/$rpc/peoplestack.PeopleStackAutocompleteService/Autocomplete",
+    {
+      method: "POST",
+      headers: {
+        "accept": "*/*",
+        "authorization": sapisidhash,
+        "content-type": "application/json+protobuf",
+        "x-goog-api-key": "AIzaSyBm7aDMG9actsWSlx-MvrYsepwdnLgz69I",
+        "x-goog-authuser": "0",
+        "x-user-agent": "grpc-web-javascript/0.1",
+        "cookie": cookies,
+        "Referer": "https://mail.google.com/",
+      },
+      body: payload,
+    }
   );
 
   if (!res.ok) return [];
-  const data = await res.json();
 
-  const results: { name: string; email: string; type: string }[] = [];
-  for (const person of data.people || []) {
-    const email = person.emailAddresses?.[0]?.value;
-    const name = person.names?.[0]?.displayName || "";
-    if (email) {
-      results.push({ name, email, type: "Person" });
+  try {
+    const data = await res.json();
+    const results: { name: string; email: string; type: string }[] = [];
+
+    // Parse protobuf-like nested array response
+    if (Array.isArray(data) && Array.isArray(data[0])) {
+      for (const entry of data[0]) {
+        try {
+          const person = entry?.[0]?.[0]?.[0];
+          if (!person) continue;
+          const nameData = person?.[0]?.[1];
+          const emailData = person?.[1];
+          const name = nameData?.[0] || "";
+          const email = emailData?.[0] || "";
+          if (email && email.includes("@")) {
+            results.push({ name, email, type: "Person" });
+          }
+        } catch {
+          continue;
+        }
+      }
     }
+
+    return results;
+  } catch {
+    return [];
   }
-  return results;
 }
 
 // ── Send Mail (Gmail API) ──

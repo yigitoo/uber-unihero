@@ -62,6 +62,12 @@ export default function SchoolDetailPage() {
   const [directBody, setDirectBody] = useState("");
   const [directSending, setDirectSending] = useState(false);
 
+  // Google cookie auth
+  const [showGoogleAuth, setShowGoogleAuth] = useState(false);
+  const [googleCookies, setGoogleCookies] = useState("");
+  const [googleSapisidhash, setGoogleSapisidhash] = useState("");
+  const [googleEmail, setGoogleEmail] = useState("");
+
   const fetchAll = useCallback(async () => {
     const [sRes, bRes, stRes, lRes, tRes] = await Promise.all([
       fetch(`/api/schools/${schoolId}`),
@@ -137,10 +143,8 @@ export default function SchoolDetailPage() {
     });
     const data = await res.json();
 
-    if (data.redirect) {
-      window.open(data.authUrl, "_blank");
-      setMsg({ text: "Google oturum açma sayfası açıldı. Tamamlandığında bu sayfa yenilenecek.", ok: true });
-      pollRef.current = setInterval(() => { fetchAll(); }, 5000);
+    if (data.googleCookieAuth) {
+      setShowGoogleAuth(true);
       return;
     }
 
@@ -160,6 +164,20 @@ export default function SchoolDetailPage() {
         fetchAll();
       }
     }, 5000);
+  }
+
+  async function saveGoogleCookies() {
+    const res = await fetch(`/api/schools/${schoolId}/auth`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "save-google-cookies", cookies: googleCookies, sapisidhash: googleSapisidhash, email: googleEmail }),
+    });
+    if (res.ok) {
+      setShowGoogleAuth(false);
+      setMsg({ text: "Google oturum bilgileri kaydedildi!", ok: true });
+      fetchAll();
+    } else {
+      setMsg({ text: "Kaydetme hatası", ok: false });
+    }
   }
 
   async function handleSend() {
@@ -213,7 +231,7 @@ export default function SchoolDetailPage() {
       </div>
 
       {/* Auth flow */}
-      {!authOk && !userCode && (
+      {!authOk && !userCode && !showGoogleAuth && (
         <div className="bg-gray-900 rounded-xl p-5 mb-6 border border-yellow-800 text-center">
           <p className="text-yellow-400 mb-3">
             {(school as Record<string, unknown>)?.provider === "google" ? "Google hesabıyla" : "Microsoft hesabıyla"} oturum aç (1 kere yeter)
@@ -230,6 +248,37 @@ export default function SchoolDetailPage() {
           <p className="text-gray-400 mt-3 mb-2">Bu kodu gir:</p>
           <div className="text-4xl font-mono font-bold tracking-widest text-white mb-3">{userCode}</div>
           {authPolling && <p className="text-gray-500 text-sm animate-pulse">Onay bekleniyor...</p>}
+        </div>
+      )}
+
+      {/* Google Cookie Auth Form */}
+      {showGoogleAuth && (
+        <div className="bg-gray-900 rounded-xl p-5 mb-6 border border-blue-800">
+          <h3 className="text-sm font-semibold text-blue-400 mb-3">Google Oturum Bilgileri</h3>
+          <p className="text-xs text-gray-500 mb-3">
+            Gmail&apos;de oturum açıkken tarayıcı DevTools → Network → herhangi bir istek → Headers → Cookie ve Authorization değerlerini kopyalayın.
+          </p>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Email</label>
+              <input value={googleEmail} onChange={e => setGoogleEmail(e.target.value)} placeholder="ornek@st.biruni.edu.tr"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:border-blue-500 focus:outline-none" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Cookie</label>
+              <textarea value={googleCookies} onChange={e => setGoogleCookies(e.target.value)} placeholder="SID=...; HSID=...; ..."
+                rows={3} className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm font-mono focus:border-blue-500 focus:outline-none resize-y" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Authorization (SAPISIDHASH)</label>
+              <input value={googleSapisidhash} onChange={e => setGoogleSapisidhash(e.target.value)} placeholder="SAPISIDHASH ..."
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm font-mono focus:border-blue-500 focus:outline-none" />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={saveGoogleCookies} className="px-5 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-sm font-medium">Kaydet</button>
+              <button onClick={() => setShowGoogleAuth(false)} className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-400">İptal</button>
+            </div>
+          </div>
         </div>
       )}
 

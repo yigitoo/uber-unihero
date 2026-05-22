@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 
 interface TopbarProps {
@@ -13,11 +13,19 @@ const titleMap: Record<string, string> = {
   "/dashboard/templates": "Şablonlar",
   "/dashboard/analytics": "Analytics",
   "/dashboard/settings": "Ayarlar",
+  "/dashboard/contacts": "Kişiler",
+  "/dashboard/groups": "Gruplar",
 };
 
 export default function Topbar({ onMenuToggle }: TopbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, toggle } = useTheme();
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/");
+  }
 
   function getTitle() {
     if (titleMap[pathname]) return titleMap[pathname];
@@ -71,6 +79,11 @@ export default function Topbar({ onMenuToggle }: TopbarProps) {
         </button>
         <span className="w-2 h-2 rounded-full bg-green-500" />
         <span className="text-xs text-gray-400">Online</span>
+        <button onClick={handleLogout} className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors" title="Çıkış Yap">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
       </div>
     </header>
   );

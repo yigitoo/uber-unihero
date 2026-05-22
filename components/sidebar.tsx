@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface SchoolStats {
   id: string;
@@ -19,6 +19,7 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [schools, setSchools] = useState<SchoolStats[]>([]);
   const [schoolsExpanded, setSchoolsExpanded] = useState(true);
   const [loadingSchools, setLoadingSchools] = useState(true);
@@ -207,6 +208,30 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           Şablonlar
         </Link>
 
+        {/* Kişiler */}
+        <Link
+          href="/dashboard/contacts"
+          className={linkClasses("/dashboard/contacts")}
+          onClick={handleLinkClick}
+        >
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Kişiler
+        </Link>
+
+        {/* Gruplar */}
+        <Link
+          href="/dashboard/groups"
+          className={linkClasses("/dashboard/groups")}
+          onClick={handleLinkClick}
+        >
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-3-3h-1m-1-4a3 3 0 11-6 0 3 3 0 016 0zm6 4a3 3 0 00-3-3h-1M9 20H4v-2a3 3 0 013-3h1m-1-4a3 3 0 116 0 3 3 0 01-6 0z" />
+          </svg>
+          Gruplar
+        </Link>
+
         {/* Analytics */}
         <Link
           href="/dashboard/analytics"
@@ -257,9 +282,18 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         </Link>
       </nav>
 
-      {/* Version */}
-      <div className="px-5 py-3 border-t border-gray-800">
-        <p className="text-[11px] text-gray-600">v1.0.0</p>
+      {/* Footer */}
+      <div className="px-3 py-3 border-t border-gray-800 space-y-1">
+        <button
+          onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); router.push("/"); }}
+          className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-gray-800/50 transition-colors"
+        >
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Çıkış Yap
+        </button>
+        <p className="text-[11px] text-gray-600 px-3">v1.1.0</p>
       </div>
     </div>
   );

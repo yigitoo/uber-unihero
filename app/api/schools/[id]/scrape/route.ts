@@ -6,13 +6,14 @@ import {
   setBatch,
   setTotalBatches,
   setContactCount,
+  redis,
   type ScrapeState,
 } from "@/lib/redis";
 import { searchPeople } from "@/lib/outlook";
 import { searchGoogleDirectory } from "@/lib/google";
 
 const LETTERS = "abcçdefgğhıijklmnoöprsştuüvwxyz".split("");
-const BATCH_SIZE = 100;
+const DEFAULT_BATCH_SIZE = 100;
 
 export async function GET(
   _req: NextRequest,
@@ -87,9 +88,13 @@ export async function POST(
         [emails[i], emails[j]] = [emails[j], emails[i]];
       }
 
-      const totalBatches = Math.ceil(emails.length / BATCH_SIZE);
+      // Read batch size from school settings
+      const schoolSettings = await redis.get<{ batchSize?: number }>(`settings:${id}`);
+      const batchSize = schoolSettings?.batchSize || DEFAULT_BATCH_SIZE;
+
+      const totalBatches = Math.ceil(emails.length / batchSize);
       for (let i = 0; i < totalBatches; i++) {
-        const batch = emails.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+        const batch = emails.slice(i * batchSize, (i + 1) * batchSize);
         await setBatch(id, i + 1, {
           emails: batch,
           status: "pending",

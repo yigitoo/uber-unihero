@@ -13,6 +13,8 @@ export default function GroupDetailPage() {
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
   const [sendSchool, setSendSchool] = useState("");
+  const [sendTemplate, setSendTemplate] = useState("");
+  const [templates, setTemplates] = useState<{ _id: string; name: string }[]>([]);
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -24,7 +26,8 @@ export default function GroupDetailPage() {
 
   useEffect(() => {
     fetchGroup();
-    fetch("/api/schools").then(r => r.ok ? r.json() : []).then(s => { setSchools(s); if (s.length) setSendSchool(s[0].id); });
+    fetch("/api/schools").then(r => r.ok ? r.json() : []).then((s: { id: string; name: string }[]) => { setSchools(s); if (s.length) setSendSchool(s[0].id); });
+    fetch("/api/templates").then(r => r.ok ? r.json() : []).then(setTemplates);
   }, [fetchGroup]);
 
   async function addMembers() {
@@ -50,10 +53,11 @@ export default function GroupDetailPage() {
 
   async function sendToGroup() {
     if (!sendSchool) { setMsg({ text: "Okul seçin", ok: false }); return; }
+    if (!sendTemplate) { setMsg({ text: "Şablon seçin", ok: false }); return; }
     setSending(true);
     const res = await fetch(`/api/groups/${groupId}/send`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ schoolId: sendSchool }),
+      body: JSON.stringify({ schoolId: sendSchool, templateId: sendTemplate }),
     });
     const d = await res.json();
     setMsg({ text: d.success ? `${d.totalSent} kişiye gönderildi` : d.error || "Hata", ok: d.success });
@@ -130,11 +134,16 @@ export default function GroupDetailPage() {
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm mb-3">
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
-            <button onClick={sendToGroup} disabled={sending || !group.members.length}
+            <label className="text-xs text-gray-500 block mb-1">Şablon</label>
+            <select value={sendTemplate} onChange={e => setSendTemplate(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm mb-3">
+              <option value="">Şablon seçin...</option>
+              {templates.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+            </select>
+            <button onClick={sendToGroup} disabled={sending || !group.members.length || !sendTemplate}
               className="w-full px-4 py-3 bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 rounded-lg text-sm font-medium">
               {sending ? "Gönderiliyor..." : `${group.members.length} Kişiye Gönder`}
             </button>
-            <p className="text-xs text-gray-600 mt-2">Okulun aktif template&apos;i kullanılır</p>
           </div>
         </div>
       </div>

@@ -5,6 +5,10 @@ export async function GET(req: NextRequest) {
   await connectDB();
   const category = req.nextUrl.searchParams.get("category");
   const search = req.nextUrl.searchParams.get("q");
+  const page = parseInt(req.nextUrl.searchParams.get("page") || "1");
+  const limit = parseInt(req.nextUrl.searchParams.get("limit") || "100");
+  const countOnly = req.nextUrl.searchParams.get("count");
+
   const filter: Record<string, unknown> = {};
   if (category) filter.category = category;
   if (search) {
@@ -13,8 +17,18 @@ export async function GET(req: NextRequest) {
       { email: { $regex: search, $options: "i" } },
     ];
   }
-  const contacts = await Contact.find(filter).sort({ createdAt: -1 }).lean();
-  return NextResponse.json(contacts);
+
+  if (countOnly) {
+    const count = await Contact.countDocuments(filter);
+    return NextResponse.json({ count });
+  }
+
+  const [contacts, total] = await Promise.all([
+    Contact.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+    Contact.countDocuments(filter),
+  ]);
+
+  return NextResponse.json({ contacts, total, page, limit, totalPages: Math.ceil(total / limit) });
 }
 
 export async function POST(req: NextRequest) {

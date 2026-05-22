@@ -19,6 +19,11 @@ export default function ContactsPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
   // Bulk selection
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
@@ -38,21 +43,25 @@ export default function ContactsPage() {
     const params = new URLSearchParams();
     if (filter !== "all") params.set("category", filter);
     if (search) params.set("q", search);
+    params.set("page", String(page));
+    params.set("limit", "100");
     const res = await fetch(`/api/contacts?${params}`);
     if (res.ok) {
       const data = await res.json();
-      setContacts(data);
+      setContacts(data.contacts || []);
+      setTotalPages(data.totalPages || 1);
+      setTotalCount(data.total || 0);
     }
     setLoading(false);
-  }, [filter, search]);
+  }, [filter, search, page]);
 
   const fetchStats = useCallback(async () => {
     const [allRes, indRes, corpRes] = await Promise.all([
-      fetch("/api/contacts").then(r => r.json()),
-      fetch("/api/contacts?category=individual").then(r => r.json()),
-      fetch("/api/contacts?category=corporate").then(r => r.json()),
+      fetch("/api/contacts?count=1").then(r => r.json()),
+      fetch("/api/contacts?count=1&category=individual").then(r => r.json()),
+      fetch("/api/contacts?count=1&category=corporate").then(r => r.json()),
     ]);
-    setStats({ total: allRes.length, individual: indRes.length, corporate: corpRes.length });
+    setStats({ total: allRes.count, individual: indRes.count, corporate: corpRes.count });
   }, []);
 
   useEffect(() => { fetchContacts(); }, [fetchContacts]);
@@ -342,7 +351,16 @@ export default function ContactsPage() {
           </div>
         )}
       </div>
-      <p className="text-xs text-gray-600 mt-2">{contacts.length} kişi gösteriliyor</p>
+      {/* Pagination */}
+      <div className="flex items-center justify-between mt-3">
+        <p className="text-xs text-gray-600">{totalCount.toLocaleString()} kişi — sayfa {page}/{totalPages}</p>
+        <div className="flex gap-1">
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+            className="px-3 py-1 bg-gray-800 hover:bg-gray-700 disabled:opacity-30 rounded text-xs">Önceki</button>
+          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+            className="px-3 py-1 bg-gray-800 hover:bg-gray-700 disabled:opacity-30 rounded text-xs">Sonraki</button>
+        </div>
+      </div>
     </div>
   );
 }

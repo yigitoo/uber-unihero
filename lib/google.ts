@@ -146,7 +146,7 @@ export async function searchGoogleDirectory(
         "origin": "https://mail.google.com",
         "authorization": sapisidhash,
         "content-type": "application/json+protobuf",
-        "x-goog-api-key": "AIzaSyBm7aDMG9actsWSlx-MvrYsepwdnLgz69I",
+        "x-goog-api-key": process.env.GOOGLE_API_KEY || "",
         "x-goog-authuser": "0",
         "x-user-agent": "grpc-web-javascript/0.1",
         "cookie": cookies,

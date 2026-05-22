@@ -45,14 +45,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // Backward compat: password login
-  if (!action) {
-    const { password } = await req.json().catch(() => ({ password: undefined }));
-    if (password === process.env.ADMIN_PASSWORD) {
-      await setAuthCookie();
-      return NextResponse.json({ ok: true });
-    }
-  }
-
   return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 }

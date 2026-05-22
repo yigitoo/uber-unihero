@@ -434,7 +434,42 @@ export default function SchoolDetailPage() {
 
       {/* Tab: Batches */}
       {tab === "batches" && (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+        <div className="space-y-4">
+          {/* Batch from contacts */}
+          <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Contacts&apos;tan Batch Oluştur</p>
+                <p className="text-xs text-gray-500">MongoDB kişilerinden batch oluşturup bu okulun auth&apos;u ile gönder</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <select id="contactTag" defaultValue="biruni" className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs">
+                  <option value="">Tüm kişiler</option>
+                  <option value="biruni">Biruni</option>
+                  <option value="student">Öğrenci</option>
+                </select>
+                <button onClick={async () => {
+                  const tag = (document.getElementById("contactTag") as HTMLSelectElement).value;
+                  const body: Record<string, unknown> = {};
+                  if (tag) body.tags = [tag];
+                  const res = await fetch(`/api/schools/${schoolId}/batches/from-contacts`, {
+                    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+                  });
+                  const d = await res.json();
+                  if (res.ok) {
+                    setMsg({ text: `${d.contactCount} kişi → ${d.totalBatches} batch oluşturuldu`, ok: true });
+                    fetchAll();
+                  } else {
+                    setMsg({ text: d.error || "Hata", ok: false });
+                  }
+                }} className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-medium">
+                  Batch Oluştur
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
           <div className="max-h-[500px] overflow-y-auto">
             {batches.map(b => (
               <div key={b.index} className="flex items-center justify-between px-4 py-3 border-b border-gray-800/50">
@@ -447,6 +482,7 @@ export default function SchoolDetailPage() {
                 </span>
               </div>
             ))}
+          </div>
           </div>
         </div>
       )}

@@ -108,3 +108,24 @@ html.light .bg-gray-800\/50 { background: rgba(226,232,240,0.5); }
 
 /* Light theme editor toolbar */
 html.light .bg-gray-600 { background: #cbd5e1; }
+
+/* Light theme button text */
+html.light .bg-blue-600,
+html.light .bg-green-600,
+html.light .bg-purple-600,
+html.light .bg-red-600 { color: #ffffff; }
+html.light .bg-blue-600 { background: #2563eb; }
+html.light .hover\:bg-blue-500:hover { background: #3b82f6; color: #ffffff; }
+html.light .hover\:bg-green-500:hover { background: #22c55e; color: #ffffff; }
+html.light .hover\:bg-purple-500:hover { background: #a855f7; color: #ffffff; }
+html.light .hover\:bg-red-500:hover { background: #ef4444; color: #ffffff; }
+
+/* Light theme misc */
+html.light .bg-blue-900\/30 { background: rgba(219,234,254,0.6); }
+html.light .bg-blue-900\/20 { background: rgba(219,234,254,0.4); }
+html.light .bg-blue-900\/10 { background: rgba(219,234,254,0.2); }
+html.light .bg-purple-900\/30 { background: rgba(243,232,255,0.6); }
+html.light .border-blue-800\/50 { border-color: #93c5fd; }
+html.light .border-green-800\/50 { border-color: #86efac; }
+html.light .bg-blue-900\/50 { background: rgba(219,234,254,0.8); }
+html.light .disabled\:bg-gray-700:disabled { background: #e2e8f0; color: #94a3b8; }

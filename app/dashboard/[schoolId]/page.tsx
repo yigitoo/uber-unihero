@@ -65,7 +65,6 @@ export default function SchoolDetailPage() {
   // Google cookie auth
   const [showGoogleAuth, setShowGoogleAuth] = useState(false);
   const [googleCookies, setGoogleCookies] = useState("");
-  const [googleSapisidhash, setGoogleSapisidhash] = useState("");
   const [googleEmail, setGoogleEmail] = useState("");
 
   const fetchAll = useCallback(async () => {
@@ -169,7 +168,7 @@ export default function SchoolDetailPage() {
   async function saveGoogleCookies() {
     const res = await fetch(`/api/schools/${schoolId}/auth`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "save-google-cookies", cookies: googleCookies, sapisidhash: googleSapisidhash, email: googleEmail }),
+      body: JSON.stringify({ action: "save-google-cookies", cookies: googleCookies, email: googleEmail }),
     });
     if (res.ok) {
       setShowGoogleAuth(false);
@@ -256,7 +255,7 @@ export default function SchoolDetailPage() {
         <div className="bg-gray-900 rounded-xl p-5 mb-6 border border-blue-800">
           <h3 className="text-sm font-semibold text-blue-400 mb-3">Google Oturum Bilgileri</h3>
           <p className="text-xs text-gray-500 mb-3">
-            Gmail&apos;de oturum açıkken tarayıcı DevTools → Network → herhangi bir istek → Headers → Cookie ve Authorization değerlerini kopyalayın.
+            Gmail&apos;de oturum açıkken tarayıcı DevTools (F12) → Network → herhangi bir istek → Headers → Cookie değerini kopyalayın.
           </p>
           <div className="space-y-3">
             <div>
@@ -265,14 +264,9 @@ export default function SchoolDetailPage() {
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:border-blue-500 focus:outline-none" />
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Cookie</label>
-              <textarea value={googleCookies} onChange={e => setGoogleCookies(e.target.value)} placeholder="SID=...; HSID=...; ..."
-                rows={3} className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm font-mono focus:border-blue-500 focus:outline-none resize-y" />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Authorization (SAPISIDHASH)</label>
-              <input value={googleSapisidhash} onChange={e => setGoogleSapisidhash(e.target.value)} placeholder="SAPISIDHASH ..."
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm font-mono focus:border-blue-500 focus:outline-none" />
+              <label className="text-xs text-gray-400 mb-1 block">Cookie (tüm cookie string)</label>
+              <textarea value={googleCookies} onChange={e => setGoogleCookies(e.target.value)} placeholder="SID=...; HSID=...; SAPISID=...; ..."
+                rows={4} className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm font-mono focus:border-blue-500 focus:outline-none resize-y" />
             </div>
             <div className="flex gap-2">
               <button onClick={saveGoogleCookies} className="px-5 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-sm font-medium">Kaydet</button>

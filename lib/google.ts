@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import {
   getAccessToken,
   setAccessToken,
@@ -108,14 +109,30 @@ export async function getValidGoogleToken(schoolId: string): Promise<string | nu
 
 // ── Directory Search (PeopleStack Autocomplete — same approach as Outlook) ──
 
+function generateSapisidHash(sapisid: string, origin: string): string {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const input = `${timestamp} ${sapisid} ${origin}`;
+  const hash = crypto.createHash("sha1").update(input).digest("hex");
+  return `SAPISIDHASH ${timestamp}_${hash}`;
+}
+
+function extractSapisid(cookieStr: string): string | null {
+  const match = cookieStr.match(/SAPISID=([^;]+)/);
+  return match ? match[1] : null;
+}
+
 export async function searchGoogleDirectory(
   schoolId: string,
   query: string,
 ): Promise<{ name: string; email: string; type: string }[]> {
   const cookies = await redis.get<string>(`auth:${schoolId}:google_cookies`);
-  const sapisidhash = await redis.get<string>(`auth:${schoolId}:google_sapisidhash`);
+  if (!cookies) return [];
 
-  if (!cookies || !sapisidhash) return [];
+  const sapisid = extractSapisid(cookies);
+  if (!sapisid) return [];
+
+  const origin = "https://mail.google.com";
+  const sapisidhash = generateSapisidHash(sapisid, origin);
 
   // Payload: [134, query, [1,2], 8]
   const payload = JSON.stringify([134, query, [1, 2], 8]);
@@ -126,6 +143,7 @@ export async function searchGoogleDirectory(
       method: "POST",
       headers: {
         "accept": "*/*",
+        "origin": "https://mail.google.com",
         "authorization": sapisidhash,
         "content-type": "application/json+protobuf",
         "x-goog-api-key": "AIzaSyBm7aDMG9actsWSlx-MvrYsepwdnLgz69I",

@@ -15,12 +15,11 @@ export async function POST(
 
     // Google: save cookies + SAPISIDHASH for PeopleStack API
     if (action === "save-google-cookies") {
-      const { cookies, sapisidhash, email } = body;
-      if (!cookies || !sapisidhash) {
-        return NextResponse.json({ error: "cookies ve sapisidhash gerekli" }, { status: 400 });
+      const { cookies, email } = body;
+      if (!cookies) {
+        return NextResponse.json({ error: "cookies gerekli" }, { status: 400 });
       }
       await redis.set(`auth:${id}:google_cookies`, cookies);
-      await redis.set(`auth:${id}:google_sapisidhash`, sapisidhash);
       if (email) await setAuthEmail(id, email);
       return NextResponse.json({ done: true });
     }

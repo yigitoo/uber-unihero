@@ -9,6 +9,8 @@ import {
   redis,
 } from "@/lib/redis";
 import { sendMail } from "@/lib/outlook";
+import { sendGmail } from "@/lib/google";
+import { getSchool } from "@/lib/redis";
 
 export async function POST(
   req: NextRequest,
@@ -41,7 +43,10 @@ export async function POST(
   if (!batch) return NextResponse.json({ error: "Batch not found" }, { status: 500 });
 
   const start = Date.now();
-  const result = await sendMail(id, template.subject, template.body, batch.emails);
+  const school = await getSchool(id);
+  const result = school?.provider === "google"
+    ? await sendGmail(id, template.subject, template.body, batch.emails)
+    : await sendMail(id, template.subject, template.body, batch.emails);
   const duration = Date.now() - start;
 
   const log = {

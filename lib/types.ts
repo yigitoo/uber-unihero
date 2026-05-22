@@ -42,12 +42,15 @@ export interface GroupSummary extends Omit<Group, "members"> {
 
 // ── School ──
 
+export type SchoolProvider = "outlook" | "google";
+
 export interface School {
   id: string;
   name: string;
   tenantId: string;
   domain: string;
   studentFilter: string;
+  provider?: SchoolProvider;
   createdAt: string;
 }
 

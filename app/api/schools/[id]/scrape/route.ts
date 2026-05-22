@@ -9,6 +9,7 @@ import {
   type ScrapeState,
 } from "@/lib/redis";
 import { searchPeople } from "@/lib/outlook";
+import { searchGoogleDirectory } from "@/lib/google";
 
 const LETTERS = "abcçdefgğhıijklmnoöprsştuüvwxyz".split("");
 const BATCH_SIZE = 100;
@@ -109,7 +110,9 @@ export async function POST(
     }
 
     const query = state.queries[state.currentIndex];
-    const results = await searchPeople(id, query);
+    const results = school.provider === "google"
+      ? await searchGoogleDirectory(id, query)
+      : await searchPeople(id, query);
 
     const SKIP_TYPES = ["UnifiedGroup", "Group", "Room", "EquipmentMailbox"];
     let newCount = 0;

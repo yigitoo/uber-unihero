@@ -46,33 +46,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, domain } = await req.json();
+    const { name, domain, provider = "outlook" } = await req.json();
 
     if (!name || !domain) {
       return NextResponse.json(
         { error: "name and domain are required" },
-        { status: 400 }
-      );
-    }
-
-    // Auto-discover tenantId from domain via OpenID config
-    const openIdRes = await fetch(
-      `https://login.microsoftonline.com/${domain}/.well-known/openid-configuration`
-    );
-    if (!openIdRes.ok) {
-      return NextResponse.json(
-        { error: "Could not discover tenant for domain" },
-        { status: 400 }
-      );
-    }
-    const openIdData = await openIdRes.json();
-    // issuer looks like: https://sts.windows.net/{tenantId}/
-    const issuer: string = openIdData.issuer;
-    const tenantId = issuer.split("/").filter(Boolean).pop() || "";
-
-    if (!tenantId) {
-      return NextResponse.json(
-        { error: "Could not extract tenantId from issuer" },
         { status: 400 }
       );
     }
@@ -82,12 +60,37 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]/gi, "-")
       .toLowerCase();
 
+    let tenantId = "";
+
+    if (provider === "outlook") {
+      const openIdRes = await fetch(
+        `https://login.microsoftonline.com/${domain}/.well-known/openid-configuration`
+      );
+      if (!openIdRes.ok) {
+        return NextResponse.json(
+          { error: "Could not discover tenant for domain" },
+          { status: 400 }
+        );
+      }
+      const openIdData = await openIdRes.json();
+      const issuer: string = openIdData.issuer;
+      tenantId = issuer.split("/").filter(Boolean).pop() || "";
+
+      if (!tenantId) {
+        return NextResponse.json(
+          { error: "Could not extract tenantId from issuer" },
+          { status: 400 }
+        );
+      }
+    }
+
     const school: School = {
       id,
       name,
       tenantId,
       domain,
       studentFilter: `@${domain}`,
+      provider,
       createdAt: new Date().toISOString(),
     };
 

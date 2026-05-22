@@ -13,6 +13,7 @@ export interface School {
   tenantId: string;
   domain: string;
   studentFilter: string;
+  provider?: "outlook" | "google";
   createdAt: string;
 }
 

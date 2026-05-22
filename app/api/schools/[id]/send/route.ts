@@ -10,6 +10,8 @@ import {
   redis,
 } from "@/lib/redis";
 import { sendMail } from "@/lib/outlook";
+import { sendGmail } from "@/lib/google";
+import { getSchool } from "@/lib/redis";
 
 export async function POST(
   req: NextRequest,
@@ -76,7 +78,10 @@ export async function POST(
 
     // Send mail
     const start = Date.now();
-    const result = await sendMail(id, subject!, mailBody!, batch.emails);
+    const school = await getSchool(id);
+    const result = school?.provider === "google"
+      ? await sendGmail(id, subject!, mailBody!, batch.emails)
+      : await sendMail(id, subject!, mailBody!, batch.emails);
     const duration = Date.now() - start;
 
     const log = {

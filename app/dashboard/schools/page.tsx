@@ -20,6 +20,7 @@ export default function SchoolManagementPage() {
   const [showForm, setShowForm] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDomain, setNewDomain] = useState("");
+  const [newProvider, setNewProvider] = useState<"outlook" | "google">("outlook");
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -56,7 +57,7 @@ export default function SchoolManagementPage() {
       const res = await fetch("/api/schools", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim(), domain: newDomain.trim() }),
+        body: JSON.stringify({ name: newName.trim(), domain: newDomain.trim(), provider: newProvider }),
         signal: abortRef.current.signal,
       });
 
@@ -143,6 +144,14 @@ export default function SchoolManagementPage() {
                 onChange={(e) => setNewDomain(e.target.value)}
                 className="w-full p-2.5 bg-gray-800 rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none text-sm"
               />
+            </div>
+            <div className="w-full sm:w-auto">
+              <label className="block text-xs text-gray-400 mb-1">Sağlayıcı</label>
+              <select value={newProvider} onChange={e => setNewProvider(e.target.value as "outlook" | "google")}
+                className="w-full p-2.5 bg-gray-800 rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none text-sm">
+                <option value="outlook">Outlook (Microsoft)</option>
+                <option value="google">Google Workspace</option>
+              </select>
             </div>
             <div className="flex gap-2">
               <button

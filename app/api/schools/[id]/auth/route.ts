@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { startDeviceCode, pollDeviceCode } from "@/lib/outlook";
+import { startGoogleDeviceCode, pollGoogleDeviceCode } from "@/lib/google";
+import { getSchool } from "@/lib/redis";
 
 export async function POST(
   req: NextRequest,
@@ -8,9 +10,13 @@ export async function POST(
   try {
     const { id } = await params;
     const { action } = await req.json();
+    const school = await getSchool(id);
+    const isGoogle = school?.provider === "google";
 
     if (action === "start") {
-      const result = await startDeviceCode(id);
+      const result = isGoogle
+        ? await startGoogleDeviceCode(id)
+        : await startDeviceCode(id);
       return NextResponse.json({
         userCode: result.userCode,
         verificationUri: result.verificationUri,
@@ -18,7 +24,9 @@ export async function POST(
     }
 
     if (action === "poll") {
-      const result = await pollDeviceCode(id);
+      const result = isGoogle
+        ? await pollGoogleDeviceCode(id)
+        : await pollDeviceCode(id);
       return NextResponse.json(result);
     }
 

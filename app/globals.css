@@ -83,7 +83,28 @@ html.light .prose-editor-wrapper .ProseMirror blockquote { border-left-color: #e
 /* Light theme status badges */
 html.light .bg-green-900\/50 { background: rgba(220,252,231,0.8); }
 html.light .text-green-400 { color: #16a34a; }
+html.light .bg-green-900\/30 { background: rgba(220,252,231,0.6); }
 html.light .bg-red-900\/50 { background: rgba(254,226,226,0.8); }
 html.light .text-red-400 { color: #dc2626; }
+html.light .text-red-300 { color: #dc2626; }
+html.light .bg-red-900\/30 { background: rgba(254,226,226,0.6); }
+html.light .border-red-800 { border-color: #f87171; }
+html.light .border-red-900\/50 { border-color: #fca5a5; }
 html.light .bg-yellow-900\/50 { background: rgba(254,249,195,0.8); }
 html.light .text-yellow-400 { color: #ca8a04; }
+html.light .text-yellow-300 { color: #a16207; }
+html.light .bg-yellow-900\/30 { background: rgba(254,249,195,0.5); }
+html.light .border-yellow-800 { border-color: #facc15; }
+html.light .bg-yellow-600 { background: #ca8a04; }
+html.light .text-blue-400 { color: #2563eb; }
+html.light .text-purple-400 { color: #7c3aed; }
+
+/* Light theme sidebar & interactive */
+html.light .bg-gray-700 { background: #e2e8f0; }
+html.light .hover\:bg-gray-800:hover { background: #e2e8f0; }
+html.light .hover\:bg-gray-700:hover { background: #e2e8f0; }
+html.light .hover\:bg-gray-800\/50:hover { background: rgba(226,232,240,0.5); }
+html.light .bg-gray-800\/50 { background: rgba(226,232,240,0.5); }
+
+/* Light theme editor toolbar */
+html.light .bg-gray-600 { background: #cbd5e1; }

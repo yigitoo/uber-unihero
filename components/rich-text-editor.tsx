@@ -139,7 +139,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
     `p-1.5 rounded text-sm transition-colors ${active ? "bg-gray-600 text-blue-400" : "text-gray-400 hover:bg-gray-700 hover:text-gray-200"}`;
 
   return (
-    <div className="border border-gray-700 rounded-lg overflow-hidden bg-gray-800">
+    <div className="border border-gray-700 rounded-lg bg-gray-800">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-gray-700 bg-gray-850 relative">
         {/* Font Family */}
@@ -149,7 +149,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
             {FONTS.find(f => editor.isActive("textStyle", { fontFamily: f.value }))?.label || "Font"}
           </button>
           {showFontMenu && (
-            <div className="absolute top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-20 py-1 min-w-[160px]">
+            <div className="absolute top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1 min-w-[180px]">
               {FONTS.map(f => (
                 <button key={f.value} type="button"
                   onClick={() => { editor.chain().focus().setFontFamily(f.value).run(); setShowFontMenu(false); }}
@@ -172,7 +172,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
             {editor.getAttributes("textStyle").fontSize || "16px"}
           </button>
           {showSizeMenu && (
-            <div className="absolute top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-20 py-1">
+            <div className="absolute top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1">
               {FONT_SIZES.map(s => (
                 <button key={s} type="button"
                   onClick={() => { editor.chain().focus().setFontSize(s).run(); setShowSizeMenu(false); }}
@@ -212,11 +212,13 @@ export default function RichTextEditor({ value, onChange }: Props) {
             </span>
           </button>
           {showColorPicker && (
-            <div className="absolute top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-20 p-2 grid grid-cols-6 gap-1">
-              {COLORS.map(c => (
-                <button key={c} type="button" onClick={() => { editor.chain().focus().setColor(c).run(); setShowColorPicker(false); }}
-                  className="w-6 h-6 rounded border border-gray-600 hover:scale-110 transition-transform" style={{ backgroundColor: c }} />
-              ))}
+            <div className="absolute top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-30 p-3" style={{ width: 228 }}>
+              <div className="grid grid-cols-6 gap-2">
+                {COLORS.map(c => (
+                  <button key={c} type="button" onClick={() => { editor.chain().focus().setColor(c).run(); setShowColorPicker(false); }}
+                    className="w-7 h-7 rounded border border-gray-600 hover:scale-110 transition-transform cursor-pointer" style={{ backgroundColor: c }} />
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -228,15 +230,17 @@ export default function RichTextEditor({ value, onChange }: Props) {
             <span className="bg-yellow-400/30 px-1 rounded text-xs">A</span>
           </button>
           {showBgPicker && (
-            <div className="absolute top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-20 p-2 grid grid-cols-6 gap-1">
-              {COLORS.map(c => (
-                <button key={c} type="button" onClick={() => { editor.chain().focus().toggleHighlight({ color: c }).run(); setShowBgPicker(false); }}
-                  className="w-6 h-6 rounded border border-gray-600 hover:scale-110 transition-transform" style={{ backgroundColor: c }} />
-              ))}
-              <button type="button" onClick={() => { editor.chain().focus().unsetHighlight().run(); setShowBgPicker(false); }}
-                className="w-6 h-6 rounded border border-gray-600 hover:scale-110 transition-transform bg-gray-800 flex items-center justify-center text-[10px] text-gray-500">
-                X
-              </button>
+            <div className="absolute top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-30 p-3" style={{ width: 228 }}>
+              <div className="grid grid-cols-6 gap-2">
+                {COLORS.map(c => (
+                  <button key={c} type="button" onClick={() => { editor.chain().focus().toggleHighlight({ color: c }).run(); setShowBgPicker(false); }}
+                    className="w-7 h-7 rounded border border-gray-600 hover:scale-110 transition-transform cursor-pointer" style={{ backgroundColor: c }} />
+                ))}
+                <button type="button" onClick={() => { editor.chain().focus().unsetHighlight().run(); setShowBgPicker(false); }}
+                  className="w-7 h-7 rounded border border-gray-600 hover:scale-110 transition-transform bg-gray-800 flex items-center justify-center text-[10px] text-gray-500 cursor-pointer">
+                  X
+                </button>
+              </div>
             </div>
           )}
         </div>

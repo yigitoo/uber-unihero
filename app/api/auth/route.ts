@@ -24,7 +24,12 @@ export async function POST(req: NextRequest) {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    await sendOTP(email, otp);
+    try {
+      await sendOTP(email, otp);
+    } catch (e) {
+      console.error("OTP send error:", e);
+      return NextResponse.json({ error: "Mail gönderilemedi" }, { status: 500 });
+    }
     return NextResponse.json({ sent: true });
   }
 

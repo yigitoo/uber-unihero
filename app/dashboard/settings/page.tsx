@@ -2,13 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/lib/theme";
-
-interface GlobalSettings {
-  defaultBatchSize: number;
-  defaultDailyLimit: number;
-  defaultDelay: number;
-  defaultMaxBatchesPerRun: number;
-}
+import type { GlobalSettings } from "@/lib/types";
 
 const DEFAULTS: GlobalSettings = {
   defaultBatchSize: 100,

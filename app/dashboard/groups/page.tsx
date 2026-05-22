@@ -2,20 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-
-interface Group {
-  _id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  memberCount: number;
-  createdAt: string;
-}
+import type { GroupSummary } from "@/lib/types";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
 
 export default function GroupsPage() {
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<GroupSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", color: "#3b82f6" });

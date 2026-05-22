@@ -57,41 +57,29 @@ const sendLogSchema = new mongoose.Schema({
   duration: Number,
 }, { timestamps: true });
 
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  role: { type: String, enum: ["admin", "user"], default: "user" },
+}, { timestamps: true });
+
+const otpSchema = new mongoose.Schema({
+  email: { type: String, required: true, index: true },
+  code: { type: String, required: true },
+  expiresAt: { type: Date, required: true },
+  used: { type: Boolean, default: false },
+}, { timestamps: true });
+
+otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
 // ── Models ──
 
 export const Template = mongoose.models.Template || mongoose.model("Template", templateSchema);
 export const Contact = mongoose.models.Contact || mongoose.model("Contact", contactSchema);
 export const Group = mongoose.models.Group || mongoose.model("Group", groupSchema);
 export const SendLog = mongoose.models.SendLog || mongoose.model("SendLog", sendLogSchema);
+export const User = mongoose.models.User || mongoose.model("User", userSchema);
+export const OTP = mongoose.models.OTP || mongoose.model("OTP", otpSchema);
 
-// ── Types ──
-
-export interface ITemplate {
-  _id: string;
-  name: string;
-  subject: string;
-  body: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface IContact {
-  _id: string;
-  name: string;
-  email: string;
-  category: "individual" | "corporate";
-  company?: string;
-  notes?: string;
-  tags?: string[];
-  createdAt: string;
-}
-
-export interface IGroup {
-  _id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  members: string[];
-  createdAt: string;
-  updatedAt: string;
-}
+// Types are in lib/types.ts
+export type { Template as ITemplate, Contact as IContact, Group as IGroup } from "./types";

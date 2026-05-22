@@ -1,28 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-
-interface Contact {
-  _id: string;
-  name: string;
-  email: string;
-  category: "individual" | "corporate";
-  company?: string;
-  notes?: string;
-  tags?: string[];
-  createdAt: string;
-}
-
-type Filter = "all" | "individual" | "corporate";
+import type { Contact, ContactCategory, ContactFilter } from "@/lib/types";
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<ContactFilter>("all");
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", category: "individual" as "individual" | "corporate", company: "" });
+  const [form, setForm] = useState({ name: "", email: "", category: "individual" as ContactCategory, company: "" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
@@ -111,7 +99,7 @@ export default function ContactsPage() {
       {/* Filters */}
       <div className="flex items-center gap-3 mb-4">
         <div className="flex bg-gray-900 rounded-lg p-1 gap-1">
-          {([["all", "Tümü"], ["individual", "Bireysel"], ["corporate", "Kurumsal"]] as [Filter, string][]).map(([key, label]) => (
+          {([["all", "Tümü"], ["individual", "Bireysel"], ["corporate", "Kurumsal"]] as [ContactFilter, string][]).map(([key, label]) => (
             <button key={key} onClick={() => setFilter(key)}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${filter === key ? "bg-gray-800 text-white" : "text-gray-500 hover:text-gray-300"}`}>
               {label}
@@ -131,7 +119,7 @@ export default function ContactsPage() {
               className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:border-blue-500 focus:outline-none" />
             <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" type="email"
               className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:border-blue-500 focus:outline-none" />
-            <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value as "individual" | "corporate" })}
+            <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value as ContactCategory })}
               className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm">
               <option value="individual">Bireysel</option>
               <option value="corporate">Kurumsal</option>

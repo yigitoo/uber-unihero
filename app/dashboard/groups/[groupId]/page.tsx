@@ -3,14 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-
-interface Group {
-  _id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  members: string[];
-}
+import type { Group } from "@/lib/types";
 
 export default function GroupDetailPage() {
   const { groupId } = useParams() as { groupId: string };

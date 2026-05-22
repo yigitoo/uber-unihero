@@ -2,15 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import RichTextEditor from "@/components/rich-text-editor";
-
-interface Template {
-  _id: string;
-  name: string;
-  subject: string;
-  body: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Template } from "@/lib/types";
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);

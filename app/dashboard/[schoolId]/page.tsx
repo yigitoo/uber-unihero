@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import RichTextEditor from "@/components/rich-text-editor";
+import type { Template } from "@/lib/types";
 
 const SITE_URL = typeof window !== "undefined" ? window.location.origin : "";
 const UBER_TEMPLATE = `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;background:#1a1a2e;color:#fff;padding:0;">
@@ -23,7 +24,7 @@ interface BatchInfo { index: number; status: string; count: number; sentAt?: str
 interface Settings { batchSize: number; dailyLimit: number; delayBetweenBatches: number; autoSend: boolean; autoSendTime: string; maxBatchesPerRun: number; }
 interface SendLog { batchId: number; count: number; status: string; timestamp: string; error?: string; duration?: number; }
 
-type Tab = "send" | "batches" | "logs" | "settings" | "scrape";
+type Tab = "send" | "direct" | "batches" | "logs" | "settings" | "scrape";
 
 export default function SchoolDetailPage() {
   const { schoolId } = useParams() as { schoolId: string };
@@ -52,6 +53,15 @@ export default function SchoolDetailPage() {
   const [scheduleActive, setScheduleActive] = useState(false);
   const [scheduleInterval, setScheduleInterval] = useState(120);
 
+  // Templates
+  const [templates, setTemplates] = useState<Template[]>([]);
+
+  // Direct send
+  const [directEmails, setDirectEmails] = useState("");
+  const [directSubject, setDirectSubject] = useState("");
+  const [directBody, setDirectBody] = useState("");
+  const [directSending, setDirectSending] = useState(false);
+
   const fetchAll = useCallback(async () => {
     const [sRes, bRes, stRes, lRes, tRes] = await Promise.all([
       fetch(`/api/schools/${schoolId}`),
@@ -79,6 +89,7 @@ export default function SchoolDetailPage() {
   useEffect(() => {
     fetchAll();
     fetchSchedule();
+    fetch("/api/templates").then(r => r.ok ? r.json() : []).then(setTemplates).catch(() => {});
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [fetchAll]);
 
@@ -223,10 +234,10 @@ export default function SchoolDetailPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-gray-900 rounded-xl p-1">
-        {(["send", "batches", "logs", "settings", "scrape"] as Tab[]).map(t => (
+        {(["send", "direct", "batches", "logs", "settings", "scrape"] as Tab[]).map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${tab === t ? "bg-gray-800 text-white" : "text-gray-500 hover:text-gray-300"}`}>
-            {t === "send" ? "Gönder" : t === "batches" ? "Batch'ler" : t === "logs" ? "Loglar" : t === "settings" ? "Ayarlar" : "Scrape"}
+            {t === "send" ? "Gönder" : t === "direct" ? "Direkt" : t === "batches" ? "Batch'ler" : t === "logs" ? "Loglar" : t === "settings" ? "Ayarlar" : "Scrape"}
           </button>
         ))}
       </div>
@@ -242,10 +253,19 @@ export default function SchoolDetailPage() {
       {tab === "send" && (
         <div className="space-y-4">
           <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
               <label className="text-sm text-gray-400">Mail Şablonu</label>
-              <button onClick={() => { setSubject("Uber %80 İndirim / 80% Off — Kod: UBERUNIHERO8"); setBody(UBER_TEMPLATE); }}
-                className="px-3 py-1 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-medium">Uber Template</button>
+              <div className="flex items-center gap-2">
+                {templates.length > 0 && (
+                  <select onChange={e => { const t = templates.find(t => t._id === e.target.value); if (t) { setSubject(t.subject); setBody(t.body); } }}
+                    defaultValue="" className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs">
+                    <option value="" disabled>Şablon Seç</option>
+                    {templates.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                  </select>
+                )}
+                <button onClick={() => { setSubject("Uber %80 İndirim / 80% Off — Kod: UBERUNIHERO8"); setBody(UBER_TEMPLATE); }}
+                  className="px-3 py-1 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-medium">Uber Template</button>
+              </div>
             </div>
             <input type="text" value={subject} onChange={e => setSubject(e.target.value)} placeholder="Konu"
               className="w-full p-3 bg-gray-800 rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none mb-3" />
@@ -287,6 +307,65 @@ export default function SchoolDetailPage() {
               {scheduleActive && <span className="text-sm text-green-400 ml-auto animate-pulse">Aktif</span>}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Tab: Direct Send */}
+      {tab === "direct" && (
+        <div className="space-y-4">
+          <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
+            <h3 className="text-sm font-semibold mb-3">Direkt Mail Gönder</h3>
+            <p className="text-xs text-gray-500 mb-3">Template kullanmadan, belirli email adreslerine direkt mail gönderin.</p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Alıcılar</label>
+                <textarea value={directEmails} onChange={e => setDirectEmails(e.target.value)}
+                  placeholder="Email adresleri (virgül, noktalı virgül veya yeni satır ile ayırın)"
+                  rows={4} className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:border-blue-500 focus:outline-none resize-y" />
+                <p className="text-xs text-gray-600 mt-1">
+                  {directEmails.split(/[,;\n]+/).filter(e => e.trim().includes("@")).length} email algılandı
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-400">Konu:</label>
+                {templates.length > 0 && (
+                  <select onChange={e => { const t = templates.find(t => t._id === e.target.value); if (t) { setDirectSubject(t.subject); setDirectBody(t.body); } }}
+                    defaultValue="" className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs">
+                    <option value="" disabled>Şablondan Yükle</option>
+                    {templates.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                  </select>
+                )}
+              </div>
+              <input type="text" value={directSubject} onChange={e => setDirectSubject(e.target.value)} placeholder="Email konusu"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:border-blue-500 focus:outline-none" />
+
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">İçerik</label>
+                <RichTextEditor value={directBody} onChange={setDirectBody} />
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={async () => {
+              const emails = directEmails.split(/[,;\n]+/).map(e => e.trim().toLowerCase()).filter(e => e.includes("@"));
+              if (!emails.length) { setMsg({ text: "En az bir email gerekli", ok: false }); return; }
+              if (!directSubject || !directBody) { setMsg({ text: "Konu ve içerik gerekli", ok: false }); return; }
+              setDirectSending(true);
+              const res = await fetch(`/api/schools/${schoolId}/send-adhoc`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ emails, subject: directSubject, body: directBody }),
+              });
+              const d = await res.json();
+              setMsg({ text: d.success ? `${d.totalSent} kişiye gönderildi (${d.duration}ms)` : d.error || "Hata", ok: d.success });
+              setDirectSending(false);
+            }}
+            disabled={directSending || !authOk}
+            className="w-full p-4 bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 rounded-xl font-medium text-lg transition-colors">
+            {directSending ? "Gönderiliyor..." : "Direkt Gönder"}
+          </button>
         </div>
       )}
 

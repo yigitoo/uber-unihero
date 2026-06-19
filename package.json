@@ -27,7 +27,7 @@
     "jspdf-autotable": "^5.0.8",
     "mongoose": "^9.6.2",
     "next": "^15.3.2",
-    "nodemailer": "^8.0.7",
+    "nodemailer": "^9.0.1",
     "papaparse": "^5.5.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
